@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="輸入箱內可用尺寸、單件尺寸與相鄰間隙，估算單一朝向均勻格的容量並比較六種軸對齊排列。">
+  <title>箱內排列容量試算 | Gloss Tools</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="/js/bootstrap.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#boxLengthRaw">前往尺寸輸入</a>
+  <header class="topbar">
+    <span class="brand">Gloss Tools <span>by GlossQuote</span></span>
+    <nav aria-label="語言與首頁">
+      <button id="change-language" type="button" class="text-button" lang="en" disabled>English</button>
+      <a href="https://glossquote.com/index.html">繁中首頁</a>
+    </nav>
+  </header>
+  <main>
+    <div class="page-intro">
+      <h1>箱內排列容量試算</h1>
+      <p>輸入箱內可用尺寸、單件尺寸與相鄰間隙，查看單一方向均勻排列的數量。</p>
+    </div>
+    <p id="init-status" class="notice" role="status">試算功能目前無法啟用。請重新載入頁面；你的輸入尚未送出。 / The calculator could not be enabled. Reload the page; your input has not been submitted.</p>
+    <div class="worksheet">
+      <form id="calculator" autocomplete="off" novalidate>
+        <fieldset disabled>
+          <legend>箱內可用尺寸（內長、內寬、內高）</legend>
+          <p class="group-help">請使用可用內尺寸，不是箱子外尺寸。</p>
+          <div class="dimensions">
+            <div class="field">
+              <label for="boxLengthRaw">長度（mm）</label>
+              <div class="measurement"><input id="boxLengthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help boxLengthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="boxLengthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="boxWidthRaw">寬度（mm）</label>
+              <div class="measurement"><input id="boxWidthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help boxWidthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="boxWidthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="boxHeightRaw">高度（mm）</label>
+              <div class="measurement"><input id="boxHeightRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help boxHeightRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="boxHeightRaw-error" class="field-error" hidden></p>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset disabled>
+          <legend>單件尺寸</legend>
+          <p class="group-help">單件的長、寬、高在各朝向中互換；同一格內不混合方向。</p>
+          <div class="dimensions">
+            <div class="field">
+              <label for="itemLengthRaw">長度（mm）</label>
+              <div class="measurement"><input id="itemLengthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help itemLengthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="itemLengthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="itemWidthRaw">寬度（mm）</label>
+              <div class="measurement"><input id="itemWidthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help itemWidthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="itemWidthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="itemHeightRaw">高度（mm）</label>
+              <div class="measurement"><input id="itemHeightRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help itemHeightRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="itemHeightRaw-error" class="field-error" hidden></p>
+            </div>
+          </div>
+        </fieldset>
+        <p id="format-help" class="help">尺寸範圍 0.01–100000.00 mm，最多兩位小數，例：10、10.5、10.50。只接受 ASCII 數字和句點，不接受逗號或空白。</p>
+        <div class="settings">
+          <div>
+            <div class="field">
+              <label for="gapRaw">相鄰件間隙（mm）</label>
+              <div class="measurement"><input id="gapRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="gap-help gapRaw-error" value="0" disabled><span aria-hidden="true">mm</span></div>
+              <p id="gapRaw-error" class="field-error" hidden></p>
+            </div>
+            <p id="gap-help" class="help">範圍 0–10000.00 mm。間隙只在相鄰物品之間計算，不包含箱壁或底部留白。</p>
+          </div>
+          <div class="rotation">
+            <label class="check-label" for="allowRotation"><input id="allowRotation" type="checkbox" checked aria-describedby="rotation-help" disabled><span>允許物品旋轉</span></label>
+            <p id="rotation-help" class="help">比較六種沿箱子三軸對齊的朝向；不包含斜放或任意角度。</p>
+          </div>
+        </div>
+        <div class="decimal-helper">
+          <button type="button" id="insert-decimal" disabled>插入小數點</button>
+          <p class="help">作用於最近聚焦的尺寸或間隙欄，插入 ASCII 句點。</p>
+        </div>
+        <p id="error-summary" class="error-summary" role="alert" hidden></p>
+        <div class="actions">
+          <button type="submit" class="primary" id="calculate" disabled>試算容量</button>
+          <button type="button" id="clear" disabled>清除</button>
+        </div>
+        <p id="work-status" class="help" role="status" aria-live="polite">請填入箱內可用尺寸和單件尺寸，再試算容量。</p>
+      </form>
+      <section id="results" aria-labelledby="result-heading" hidden>
+        <div class="result-summary">
+          <h2 id="result-heading">最大均勻格數</h2>
+          <p class="total-line"><span id="total"></span><span class="unit">件</span></p>
+          <p id="orientation-summary" class="orientation-summary"></p>
+          <p id="layer-summary"></p>
+          <p id="no-fit" class="no-fit" hidden></p>
+          <p id="tie-notice" class="tie-notice" hidden></p>
+        </div>
+        <h2 id="comparison-heading">軸對齊朝向比較</h2>
+        <p class="help">L、W、H 分別代表單件的長、寬、高；順序依次對應箱長、箱寬、箱高。每層以箱長 × 箱寬為底面，沿箱高計層。</p>
+        <p id="table-help" class="help">表格可左右捲動；鍵盤聚焦後可用左右方向鍵。</p>
+        <div id="comparison-scroll" class="table-scroll" role="region" aria-labelledby="comparison-heading" aria-describedby="table-help" tabindex="0">
+          <table>
+            <caption>各朝向的規則格數與已佔尺寸</caption>
+            <thead><tr><th scope="col">朝向</th><th scope="col">箱長軸數</th><th scope="col">箱寬軸數</th><th scope="col">箱高軸數</th><th scope="col">總件數</th><th scope="col">已佔尺寸（箱長 × 箱寬 × 箱高）</th></tr></thead>
+            <tbody id="orientation-rows"></tbody>
+          </table>
+        </div>
+      </section>
+      <p class="model-limit">這是單一朝向的均勻格估算，不是混合排列或實物裝箱保證。</p>
+    </div>
+    <p class="privacy">輸入只在目前頁面試算，不會保存；首次載入仍需下載網站檔案。</p>
+    <section class="faq" aria-labelledby="faq-heading">
+      <h2 id="faq-heading">計算方式與限制</h2>
+      <details><summary>這會找出最佳 3D 裝箱方式嗎？</summary><p>不會。它只計算每個指定軸向朝向的單一均勻格，不混合方向或搜尋剩餘空間。</p></details>
+      <details><summary>允許旋轉代表可以任意轉動嗎？</summary><p>不代表。只會把長、寬、高互換並沿箱子的三軸對齊；易碎、方向標示和物品形狀等限制由使用者自行判斷。</p></details>
+      <details><summary>間隙如何套用？</summary><p>間隙只在同一箱軸上相鄰的兩件之間加入，第一件與箱壁之間不加留白。</p></details>
+      <details><summary>計算結果保證東西放得進去嗎？</summary><p>不保證。公式沒有驗證實際形狀、公差、包裝變形、重量、操作空間或箱子承重。</p></details>
+    </section>
+  </main>
+  <footer>Gloss Tools by GlossQuote</footer>
+  <dialog id="confirmation" aria-labelledby="confirmation-title" aria-describedby="confirmation-text">
+    <h2 id="confirmation-title">清除尺寸與結果</h2>
+    <p id="confirmation-text">清除目前尺寸和試算結果？取消會保留所有內容。</p>
+    <div class="dialog-actions">
+      <button id="cancel-action" type="button" autofocus disabled>取消</button>
+      <button id="confirm-action" type="button" class="primary" disabled>確認清除</button>
+    </div>
+  </dialog>
+</body>
+</html>
+

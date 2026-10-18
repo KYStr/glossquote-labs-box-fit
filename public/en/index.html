@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Estimate a uniform grid of identical items inside a box, compare six axis-aligned orientations, and see per-layer counts.">
+  <title>Box Grid Capacity Calculator | Gloss Tools</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="/js/bootstrap.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#boxLengthRaw">Skip to dimensions</a>
+  <header class="topbar">
+    <span class="brand">Gloss Tools <span>by GlossQuote</span></span>
+    <nav aria-label="Language and home">
+      <button id="change-language" type="button" class="text-button" lang="zh-Hant" disabled>繁體中文</button>
+      <a href="https://glossquote.com/en/index.html">English home</a>
+    </nav>
+  </header>
+  <main>
+    <div class="page-intro">
+      <h1>Box Grid Capacity Calculator</h1>
+      <p>Enter the box's usable inner dimensions, one item's dimensions and the gap between adjacent items to compare uniform grids.</p>
+    </div>
+    <p id="init-status" class="notice" role="status">試算功能目前無法啟用。請重新載入頁面；你的輸入尚未送出。 / The calculator could not be enabled. Reload the page; your input has not been submitted.</p>
+    <div class="worksheet">
+      <form id="calculator" autocomplete="off" novalidate>
+        <fieldset disabled>
+          <legend>Usable inner box dimensions</legend>
+          <p class="group-help">Use the available space inside the box, not its outer dimensions.</p>
+          <div class="dimensions">
+            <div class="field">
+              <label for="boxLengthRaw">Length (mm)</label>
+              <div class="measurement"><input id="boxLengthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help boxLengthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="boxLengthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="boxWidthRaw">Width (mm)</label>
+              <div class="measurement"><input id="boxWidthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help boxWidthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="boxWidthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="boxHeightRaw">Height (mm)</label>
+              <div class="measurement"><input id="boxHeightRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help boxHeightRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="boxHeightRaw-error" class="field-error" hidden></p>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset disabled>
+          <legend>Single-item dimensions</legend>
+          <p class="group-help">Length, width and height swap between orientations. Each grid uses one orientation throughout.</p>
+          <div class="dimensions">
+            <div class="field">
+              <label for="itemLengthRaw">Length (mm)</label>
+              <div class="measurement"><input id="itemLengthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help itemLengthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="itemLengthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="itemWidthRaw">Width (mm)</label>
+              <div class="measurement"><input id="itemWidthRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help itemWidthRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="itemWidthRaw-error" class="field-error" hidden></p>
+            </div>
+            <div class="field">
+              <label for="itemHeightRaw">Height (mm)</label>
+              <div class="measurement"><input id="itemHeightRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="format-help itemHeightRaw-error" disabled><span aria-hidden="true">mm</span></div>
+              <p id="itemHeightRaw-error" class="field-error" hidden></p>
+            </div>
+          </div>
+        </fieldset>
+        <p id="format-help" class="help">Dimensions: 0.01–100000.00 mm, at most two decimal places. Examples: 10, 10.5, 10.50. Use ASCII digits and a dot; no commas or spaces.</p>
+        <div class="settings">
+          <div>
+            <div class="field">
+              <label for="gapRaw">Gap between adjacent items (mm)</label>
+              <div class="measurement"><input id="gapRaw" type="text" inputmode="decimal" maxlength="12" autocomplete="off" spellcheck="false" aria-describedby="gap-help gapRaw-error" value="0" disabled><span aria-hidden="true">mm</span></div>
+              <p id="gapRaw-error" class="field-error" hidden></p>
+            </div>
+            <p id="gap-help" class="help">Range: 0–10000.00 mm. The gap applies only between adjacent items; no wall or floor clearance is added.</p>
+          </div>
+          <div class="rotation">
+            <label class="check-label" for="allowRotation"><input id="allowRotation" type="checkbox" checked aria-describedby="rotation-help" disabled><span>Allow rotation</span></label>
+            <p id="rotation-help" class="help">Compare six orientations aligned to the box axes. This does not include tilting or arbitrary angles.</p>
+          </div>
+        </div>
+        <div class="decimal-helper">
+          <button type="button" id="insert-decimal" disabled>Insert decimal point</button>
+          <p class="help">Inserts an ASCII dot in the most recently focused dimension or gap field.</p>
+        </div>
+        <p id="error-summary" class="error-summary" role="alert" hidden></p>
+        <div class="actions">
+          <button type="submit" class="primary" id="calculate" disabled>Calculate capacity</button>
+          <button type="button" id="clear" disabled>Clear</button>
+        </div>
+        <p id="work-status" class="help" role="status" aria-live="polite">Enter usable inner box dimensions and single-item dimensions, then calculate capacity.</p>
+      </form>
+      <section id="results" aria-labelledby="result-heading" hidden>
+        <div class="result-summary">
+          <h2 id="result-heading">Maximum uniform-grid count</h2>
+          <p class="total-line"><span id="total"></span><span class="unit">items</span></p>
+          <p id="orientation-summary" class="orientation-summary"></p>
+          <p id="layer-summary"></p>
+          <p id="no-fit" class="no-fit" hidden></p>
+          <p id="tie-notice" class="tie-notice" hidden></p>
+        </div>
+        <h2 id="comparison-heading">Axis-aligned orientation comparison</h2>
+        <p class="help">L, W and H mean the item's original length, width and height, in order along the box's length, width and height axes. A base layer spans box length × width; layers run along box height.</p>
+        <p id="table-help" class="help">Scroll this table horizontally. When focused, use the left and right arrow keys.</p>
+        <div id="comparison-scroll" class="table-scroll" role="region" aria-labelledby="comparison-heading" aria-describedby="table-help" tabindex="0">
+          <table>
+            <caption>Uniform-grid counts and occupied dimensions for each orientation</caption>
+            <thead><tr><th scope="col">Orientation</th><th scope="col">Along box length</th><th scope="col">Along box width</th><th scope="col">Along box height</th><th scope="col">Total items</th><th scope="col">Occupied dimensions (box length × width × height)</th></tr></thead>
+            <tbody id="orientation-rows"></tbody>
+          </table>
+        </div>
+      </section>
+      <p class="model-limit">This estimates one uniform grid orientation. It does not optimize mixed arrangements or guarantee a physical fit.</p>
+    </div>
+    <p class="privacy">Inputs are calculated on this page and are not saved. The site files must still load the first time.</p>
+    <section class="faq" aria-labelledby="faq-heading">
+      <h2 id="faq-heading">Calculation and limits</h2>
+      <details><summary>Does this find the optimal 3D packing arrangement?</summary><p>No. It compares one uniform grid for each listed axis-aligned orientation. It does not mix orientations or search remaining space.</p></details>
+      <details><summary>Does rotation mean any angle is allowed?</summary><p>No. It only permutes the item's length, width and height along the box axes. You must account for labels, fragility and shape constraints yourself.</p></details>
+      <details><summary>How is the gap applied?</summary><p>The gap is added only between adjacent items along each box axis. No clearance is added between an item and a box wall.</p></details>
+      <details><summary>Does the result guarantee that everything will fit physically?</summary><p>No. The calculation does not check shape, tolerances, flexible packaging, weight, handling room or box strength.</p></details>
+    </section>
+  </main>
+  <footer>Gloss Tools by GlossQuote</footer>
+  <dialog id="confirmation" aria-labelledby="confirmation-title" aria-describedby="confirmation-text">
+    <h2 id="confirmation-title">Clear dimensions and result</h2>
+    <p id="confirmation-text">Clear the current dimensions and result? Cancel to keep everything.</p>
+    <div class="dialog-actions">
+      <button id="cancel-action" type="button" autofocus disabled>Cancel</button>
+      <button id="confirm-action" type="button" class="primary" disabled>Confirm clear</button>
+    </div>
+  </dialog>
+</body>
+</html>
+
