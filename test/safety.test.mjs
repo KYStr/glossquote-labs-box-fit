@@ -10,7 +10,7 @@ import { createPreviewServer, SECURITY_HEADERS } from '../scripts/lib/server.mjs
 
 test('Static source contract: no dependencies, network/storage APIs or unsafe rendering', async () => {
   const files = await checkSource();
-  assert.equal(files.size, 8);
+  assert.equal(files.size, 9);
 });
 
 test('Manifest is deterministic and records exact file bytes', () => {

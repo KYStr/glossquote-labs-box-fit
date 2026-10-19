@@ -44,6 +44,7 @@ export async function checkProductionHttp(files, suppliedPort) {
       assert.equal(response.headers['x-robots-tag'], canonical ? 'index,follow' : 'noindex,nofollow');
       const csp = response.headers['content-security-policy'];
       assert.ok(csp.includes("connect-src 'none'") && csp.includes("form-action 'none'") && csp.includes("frame-ancestors 'none'"));
+      assert.equal(csp.split('; ').find(rule => rule.startsWith('img-src ')), "img-src 'self'");
       assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval/);
       if (canonical) {
         const html = response.bytes.toString();
@@ -52,6 +53,8 @@ export async function checkProductionHttp(files, suppliedPort) {
         assert.equal(JSON.parse(json).url, ORIGIN + path);
         assert.equal([...html.matchAll(/rel="canonical"/g)].length, 1);
         assert.equal([...html.matchAll(/hreflang=/g)].length, 3);
+        assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="/favicon.svg">'));
+        assert.equal(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/.exec(html)[1], csp.replace("; frame-ancestors 'none'", ''));
       }
       const head = await localRequest(port, path, 'HEAD');
       assert.equal(head.status, response.status);

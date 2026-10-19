@@ -1,9 +1,10 @@
 import http from 'node:http';
 import { extname } from 'node:path';
 import { MIME } from './files.mjs';
+import { BASE_CSP } from './csp.mjs';
 
 export const SECURITY_HEADERS = Object.freeze({
-  'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'none'; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+  'Content-Security-Policy': BASE_CSP,
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'no-referrer',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',

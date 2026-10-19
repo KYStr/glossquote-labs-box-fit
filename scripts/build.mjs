@@ -14,7 +14,7 @@ try {
   }
   await writeFile(join(directory, 'manifest.json'), JSON.stringify(manifestOf(source), null, 2) + '\n');
   await verifyBuild();
-  console.log('PASS: deterministic M1 noindex preview built in dist/ (8 static files + manifest.json).');
+  console.log(`PASS: deterministic noindex preview built in dist/ (${source.size} static files + manifest.json).`);
 } catch (error) {
   console.error(`FAIL: ${error.message}`);
   process.exitCode = 1;

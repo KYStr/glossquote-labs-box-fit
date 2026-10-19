@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ROOT, loadPublic, requireNode } from './files.mjs';
+import { META_CSP } from './csp.mjs';
 
 export async function checkSource() {
   requireNode();
@@ -18,6 +19,12 @@ export async function checkSource() {
       assert.doesNotMatch(text, /https?:|navigator\s*\./);
     }
     if (file.endsWith('.css')) assert.doesNotMatch(text, /@import|url\s*\(|@font-face/i);
+    if (file.endsWith('.svg')) {
+      assert.match(text, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 32 32">/);
+      assert.ok(bytes.length < 2048);
+      assert.doesNotMatch(text, /<!|<\?|\b(?:href|on\w+)\s*=|url\s*\(/i);
+      for (const tag of text.matchAll(/<\/?([A-Za-z][\w:-]*)\b/g)) assert.ok(['svg', 'rect', 'path'].includes(tag[1]));
+    }
     if (file.endsWith('.html')) {
       assert.match(text, /<meta name="robots" content="noindex,nofollow">/);
       assert.doesNotMatch(text, /\bname\s*=\s*["'](?:box|item|gap|allow)|<input[^>]*\bname\s*=/i);
@@ -26,7 +33,7 @@ export async function checkSource() {
       for (const match of text.matchAll(/<(?:input|button|fieldset)\b[^>]*>/g)) assert.match(match[0], /\bdisabled\b/);
       for (const match of text.matchAll(/\b(?:href|src)="([^"]*)"/g)) {
         const url = match[1];
-        assert.ok(url.startsWith('/') || url === '#boxLengthRaw' || url === 'data:,' || url === 'https://glossquote.com/index.html' || url === 'https://glossquote.com/en/index.html', 'Unexpected static URL.');
+        assert.ok(url.startsWith('/') || url === '#boxLengthRaw' || url === 'https://glossquote.com/index.html' || url === 'https://glossquote.com/en/index.html', 'Unexpected static URL.');
         assert.ok(!url.startsWith('//'), 'Protocol-relative URLs are forbidden.');
       }
     }
@@ -35,6 +42,10 @@ export async function checkSource() {
   assert.match(bootstrap, /addEventListener\('submit', function preventSubmission\(event\)\s*\{\s*event\.preventDefault\(\);\s*\}, true\)/);
   for (const file of ['index.html', 'en/index.html']) {
     const page = loaded.get(file).toString('utf8');
+    assert.equal([...page.matchAll(/<meta http-equiv="Content-Security-Policy"/g)].length, 1);
+    assert.ok(page.includes(`<meta http-equiv="Content-Security-Policy" content="${META_CSP}">`));
+    assert.equal([...page.matchAll(/<link rel="icon"/g)].length, 1);
+    assert.ok(page.includes('<link rel="icon" type="image/svg+xml" href="/favicon.svg">'));
     assert.ok(page.indexOf('<script src="/js/bootstrap.js"></script>') < page.indexOf('<form'));
     assert.equal([...page.matchAll(/<input\b/g)].length, 8);
     assert.equal([...page.matchAll(/type="text" inputmode="decimal" maxlength="12"/g)].length, 7);

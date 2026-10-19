@@ -5,10 +5,10 @@ import { join } from 'node:path';
 
 export const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const PUBLIC_FILES = Object.freeze([
-  '404.html', 'css/app.css', 'en/index.html', 'index.html',
+  '404.html', 'css/app.css', 'en/index.html', 'favicon.svg', 'index.html',
   'js/app.js', 'js/bootstrap.js', 'js/core/calculate-box-fit.js', 'robots.txt',
 ]);
-export const MIME = Object.freeze({ '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8' });
+export const MIME = Object.freeze({ '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.svg': 'image/svg+xml; charset=utf-8' });
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export function requireNode() {

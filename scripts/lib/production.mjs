@@ -6,17 +6,31 @@ import { ROOT, PUBLIC_FILES, assertTree, manifestOf, sha256 } from './files.mjs'
 import { checkSource } from './check-source.mjs';
 import { parseHeaders, applyHeaders } from './headers.mjs';
 import { parseRobots, robotsAllowed } from './robots.mjs';
+import { BASE_CSP, META_CSP } from './csp.mjs';
 
 export const ORIGIN = 'https://boxfit.glossquote.com';
 export const PRODUCTION_FILES = Object.freeze([...PUBLIC_FILES, '_headers', '_redirects', 'sitemap.xml'].sort());
 export const CANONICALS = Object.freeze(['/index.html', '/en/index.html']);
 export const REDIRECTS = Object.freeze({ '/': `${ORIGIN}/index.html`, '/en': `${ORIGIN}/en/index.html`, '/en/': `${ORIGIN}/en/index.html` });
-const baseCsp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'none'; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'";
+const baseCsp = BASE_CSP;
 export const inlineHash = body => createHash('sha256').update(body).digest('base64');
 
 export async function verifyM1Assets(source) {
   const baseline = JSON.parse(await readFile(join(ROOT, 'release/m1-public-hashes.json'), 'utf8'));
-  assert.deepEqual(manifestOf(source), baseline, 'M1 public bytes must remain unchanged.');
+  // Keep the frozen M1 manifest. Undo only the reviewed R2 favicon/CSP head change.
+  const original = new Map(source);
+  assert.ok(original.delete('favicon.svg'), 'R2 local favicon is required.');
+  for (const file of ['index.html', 'en/index.html']) {
+    let html = original.get(file).toString('utf8');
+    const meta = `  <meta http-equiv="Content-Security-Policy" content="${META_CSP}">`;
+    const icon = '<link rel="icon" type="image/svg+xml" href="/favicon.svg">';
+    assert.equal(html.split(meta).length, 2, 'Exactly one R2 meta policy is required.');
+    assert.equal(html.split(icon).length, 2, 'Exactly one R2 favicon link is required.');
+    assert.ok(html.includes(meta + '\r\n') || html.includes(meta + '\n'));
+    html = html.replace(meta + (html.includes(meta + '\r\n') ? '\r\n' : '\n'), '').replace(icon, '<link rel="icon" href="data:,">');
+    original.set(file, Buffer.from(html));
+  }
+  assert.deepEqual(manifestOf(original), baseline, 'M1 public bytes outside the reviewed R2 favicon/CSP correction must remain unchanged.');
 }
 
 export async function checkWrangler() {
@@ -53,7 +67,8 @@ export async function createProductionFiles() {
       `  <meta property="og:url" content="${ORIGIN}${path}">\n` +
       `  <meta property="og:locale" content="${index === 0 ? 'zh_TW' : 'en_US'}">\n` +
       `  <script type="application/ld+json">${json}</script>\n`;
-    const html = original.replace('<meta name="robots" content="noindex,nofollow">', '<meta name="robots" content="index,follow">').replace('</head>', metadata + '</head>');
+    const metaPolicy = META_CSP.replace("script-src 'self'", `script-src 'self' 'sha256-${inlineHash(json)}'`);
+    const html = original.replace(`<meta http-equiv="Content-Security-Policy" content="${META_CSP}">`, `<meta http-equiv="Content-Security-Policy" content="${metaPolicy}">`).replace('<meta name="robots" content="noindex,nofollow">', '<meta name="robots" content="index,follow">').replace('</head>', metadata + '</head>');
     assert.equal(html.slice(html.indexOf('<body>')), original.slice(original.indexOf('<body>')), 'Production must preserve the M1 task canvas.');
     output.set(path.slice(1), Buffer.from(html));
     hashes.set(path, inlineHash(json));
@@ -64,7 +79,7 @@ export async function createProductionFiles() {
   }
   output.set('_headers', Buffer.from(headers));
   output.set('_redirects', Buffer.from(Object.entries(REDIRECTS).map(([from, to]) => `${from} ${to} 301`).join('\n') + '\n'));
-  const allowed = ['/', '/en', '/en/', ...CANONICALS, '/css/app.css', '/js/app.js', '/js/bootstrap.js', '/js/core/calculate-box-fit.js', '/robots.txt', '/sitemap.xml'];
+  const allowed = ['/', '/en', '/en/', ...CANONICALS, '/favicon.svg', '/css/app.css', '/js/app.js', '/js/bootstrap.js', '/js/core/calculate-box-fit.js', '/robots.txt', '/sitemap.xml'];
   output.set('robots.txt', Buffer.from('User-agent: *\nDisallow: /\n' + allowed.map(path => `Allow: ${path}$`).join('\n') + `\nSitemap: ${ORIGIN}/sitemap.xml\n`));
   output.set('sitemap.xml', Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${CANONICALS.map(path => `  <url><loc>${ORIGIN}${path}</loc></url>`).join('\n')}\n</urlset>\n`));
   return new Map([...output].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
@@ -88,6 +103,7 @@ export function validateProduction(files) {
     const headers = applyHeaders(rules, path);
     assert.equal(headers['x-robots-tag'], 'index,follow');
     assert.doesNotMatch(headers['content-security-policy'], /unsafe-inline|unsafe-eval/);
+    assert.equal(headers['content-security-policy'].split('; ').find(rule => rule.startsWith('img-src ')), "img-src 'self'");
     const jsonBodies = [...html.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g)].map(match => match[1]);
     assert.equal(jsonBodies.length, 1);
     const data = JSON.parse(jsonBodies[0]);
@@ -96,6 +112,12 @@ export function validateProduction(files) {
     assert.equal(data.inLanguage, index === 0 ? 'zh-Hant' : 'en');
     assert.ok(headers['content-security-policy'].includes(`'sha256-${inlineHash(jsonBodies[0])}'`));
     assert.equal([...headers['content-security-policy'].matchAll(/sha256-/g)].length, 1);
+    const meta = /<meta http-equiv="Content-Security-Policy" content="([^"]+)">/.exec(html);
+    assert.ok(meta);
+    assert.equal(meta[1], headers['content-security-policy'].replace("; frame-ancestors 'none'", ''));
+    assert.ok(html.includes('<link rel="icon" type="image/svg+xml" href="/favicon.svg">'));
+    assert.ok(files.has('favicon.svg'));
+    assert.equal(robotsAllowed(robots, '/favicon.svg'), true);
     for (const match of html.matchAll(/(?:src|href)="(\/(?:css|js)\/[^"?#]+)"/g)) {
       assert.ok(files.has(match[1].slice(1)), 'Referenced static asset must exist.');
       assert.equal(robotsAllowed(robots, match[1]), true, 'Robots must allow every actual script and stylesheet.');

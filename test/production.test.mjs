@@ -10,10 +10,10 @@ import { checkProductionHttp } from '../scripts/lib/release-http.mjs';
 import { parseRedirects } from '../scripts/lib/production-server.mjs';
 import { createHash } from 'node:crypto';
 
-test('M2: frozen M1 source bytes remain exactly unchanged', async () => {
+test('M2-R2: frozen M1 bytes remain exact after undoing only the reviewed favicon/CSP head correction', async () => {
   const source = await loadPublic();
   await verifyM1Assets(source);
-  assert.equal(source.size, 8);
+  assert.equal(source.size, 9);
   const altered = new Map(source);
   altered.set('js/app.js', Buffer.from('unreviewed change'));
   await assert.rejects(verifyM1Assets(altered), /M1 public bytes/);
@@ -21,7 +21,7 @@ test('M2: frozen M1 source bytes remain exactly unchanged', async () => {
 
 test('M2: canonical, reciprocal languages, matching OG and exact JSON-LD hashes', async () => {
   const files = await createProductionFiles();
-  assert.deepEqual(validateProduction(files), { canonicalPages: 2, jsonLdHashes: 2, staticFiles: 11, robotsActualAssets: 'PASS' });
+  assert.deepEqual(validateProduction(files), { canonicalPages: 2, jsonLdHashes: 2, staticFiles: 12, robotsActualAssets: 'PASS' });
   const headers = parseHeaders(files.get('_headers').toString());
   for (const [path, lang, name] of [
     ['/index.html', 'zh-Hant', '箱內排列容量試算'],
@@ -95,7 +95,7 @@ test('M2: robots equal-specificity allow wins; wildcard behavior is exercised', 
 test('M2: actual robots permits both canonical pages and all public runtime assets', async () => {
   const files = await createProductionFiles();
   const rules = parseRobots(files.get('robots.txt').toString());
-  for (const path of ['/index.html', '/en/index.html', '/css/app.css', '/js/app.js', '/js/bootstrap.js', '/js/core/calculate-box-fit.js', '/robots.txt', '/sitemap.xml']) assert.equal(robotsAllowed(rules, path), true, path);
+  for (const path of ['/index.html', '/en/index.html', '/favicon.svg', '/css/app.css', '/js/app.js', '/js/bootstrap.js', '/js/core/calculate-box-fit.js', '/robots.txt', '/sitemap.xml']) assert.equal(robotsAllowed(rules, path), true, path);
   for (const path of ['/docs/README.md', '/test/core.test.mjs', '/scripts/dev.mjs', '/package.json', '/.git/config', '/.runs/a', '/CSS/app.css', '/js/app.js.extra']) assert.equal(robotsAllowed(rules, path), false, path);
   assert.deepEqual([...files.get('sitemap.xml').toString().matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]), ['https://boxfit.glossquote.com/index.html', 'https://boxfit.glossquote.com/en/index.html']);
 });
@@ -140,6 +140,6 @@ test('M2: production build verification rejects stale bytes, manifest and unexpe
 test('M2: actual offline loopback production HTTP GET/HEAD/MIME/SEO/CSP/redirect/404/405', async () => {
   const result = await checkProductionHttp(await createProductionFiles());
   assert.equal(result.status, 'PASS');
-  assert.equal(result.records.length, 34);
+  assert.equal(result.records.length, 35);
   assert.match(result.scope, /not Cloudflare/);
 });
